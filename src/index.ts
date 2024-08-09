@@ -23,8 +23,7 @@ app.get("/todos", async(req,res) =>{
     const result = getTodoSchema.safeParse(req.query);
     if(!result.success){
       res.status(400).json({error: result.error.errors[0].message});
-    }
-    if(result.success){
+    }else{
       const {title, body, dueDateStart, dueDateEnd} = result.data;
       const todos = await prisma.todo.findMany({
         where: {
