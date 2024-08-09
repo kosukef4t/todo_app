@@ -1,0 +1,33 @@
+要件
+- GET Todoの一覧／検索
+    - 検索
+        - ✓タイトルでのLIKE検索 : http://localhost:3000/todos?title=test
+        - ✓bodyでのLIKE検索 : http://localhost:3000/todos?body=test
+        - ✓期日の範囲検索 : http://localhost:3000/todos?startDate=2021-01-01&endDate=2021-01-31
+        - ✓完了したかどうかで検索 : http://localhost:3000/todos/:id/completed
+    - 最新のが上にきてください ✓
+    - その他
+        - ページネーションはなくていいです
+- GET Todoの詳細
+    - エンティティを返す
+    - ✓該当のtodoが見つからない場合は404
+- POST Todoの作成
+    - ✓必須のものがあれば作成可能。作成したら作成したtodoを返す
+    - ✓ない場合は400のバリデーションエラー
+- PATCH Todoの更新
+    - ✓上記と同じ。更新したらそのtodoを返す
+    - ✓該当のtodoが見つからない場合は404
+- DELETE Todoの削除
+    - ✓todoを削除できる。削除したら空のjsonを返す
+    - ✓該当のtodoが見つからない場合は404
+- POST Todoの複製
+    - ✓todoを複製できる。期日と完了日時はnullの状態にする。複製したtodoを返す
+    - ✓`title` は `{title}のコピー` にする
+
+
+
+
+
+
+
+
