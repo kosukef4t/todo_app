@@ -62,6 +62,17 @@ app.get("/todos/:id/completed", async(req,res)=>{
   }
 });
 
+//特定のタスクを取得
+app.get("/todos/:id", async(req,res)=>{
+  const { id } = req.params;
+  const todo = await prisma.todo.findUnique({where:{id}});
+  if(todo){
+    res.json(todo);
+  }else{
+    res.status(404).json({message: "Todo not found"});
+  }
+});
+
 //タスクの作成
 const createTodoSchema = z.object({
   title: z.string().nonempty('タイトルを入力してください！'),
