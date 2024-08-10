@@ -11,28 +11,32 @@ app.use(bodyParser.json());
 
 //タスクを取得 : LIKE検索, 期日の範囲検索
 const getTodoSchema = z.object({
-  search_title: z.string().optional(),
-  search_body: z.string().optional(),
-  dueDateStart: z.string().optional(),
-  dueDateEnd: z.string().optional(),
-  is_dueNull: z.string().optional()
+  title: z.string().optional(),
+  body: z.string().optional(),
+  dueDateStart: z.string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'dueDateStartは2024-01-01のようなフォーマットで入力してください')
+    .optional(),
+  dueDateEnd: z.string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'dueDateEndは2024-01-01のようなフォーマットで入力してください')
+    .optional(),
+  is_dueNull: z.enum(["true","false"])
+    .transform((value)=>value === "true"? true : value === "false" ? false : undefined)
+    .optional()
 });
 
 app.get("/todos", async(req,res) =>{
-  try{
     const result = getTodoSchema.safeParse(req.query);
     if(!result.success){
       res.status(400).json({error: result.error.errors[0].message});
     }else{
-      const {search_title, search_body, dueDateStart, dueDateEnd, is_dueNull} = result.data;
-      const dueStart = dueDateStart+"T00:00:00.000Z";
-      const dueEnd = dueDateEnd+"T23:59:59.999Z";
+      const {title, body, dueDateStart, dueDateEnd, is_dueNull} = result.data;
       const todos = await prisma.todo.findMany({
         where: {
-          ...(search_title && {title:{contains: search_title}}),
-          ...(search_body && {body:{contains: search_body}}),
-          ...(dueStart && dueEnd && {dueDate: {gte: dueStart,lte: dueEnd}}),
-          ...(is_dueNull && {dueDate: null})
+          ...(title && {title:{contains: title}}),
+          ...(body && {body:{contains: body}}),
+          ...(dueDateStart && dueDateEnd && {dueDate: {gte: dueDateStart+"T00:00:00.000Z",lte: dueDateEnd+"T23:59:59.999Z"}}),
+          ...(is_dueNull && {dueDate: null}),
+          ...(is_dueNull === false && { dueDate: { not: null } })
         },
         orderBy:{
           createdAt: "desc"
@@ -40,9 +44,6 @@ app.get("/todos", async(req,res) =>{
       });
       res.json(todos);
     }
-  }catch(error){
-    res.status(500).json({error: "Internal Server Error"});
-  }
 });
 
 //特定のタスクを取得
