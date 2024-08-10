@@ -46,22 +46,6 @@ app.get("/todos", async(req,res) =>{
   }
 });
 
-//タスクが完了したかを取得
-app.get("/todos/:id/completed", async(req,res)=>{
-  const { id } = req.params;
-  const todo = await prisma.todo.findUnique({where:{id}});
-  if(!todo){
-    res.status(404).json({message: "Todo not found"});
-  }else{
-    const now = new Date();
-    if(todo.completedAt && new Date(todo.completedAt) <= now){
-      res.json(`タスク '${todo.title}' は完了しています。完了時刻は${todo.completedAt}です`);
-    }else{
-      res.json(`タスク '${todo.title}' は完了していません`);
-    }
-  }
-});
-
 //特定のタスクを取得
 app.get("/todos/:id", async(req,res)=>{
   const { id } = req.params;
@@ -139,6 +123,29 @@ app.patch("/todos/:id", async(req,res)=>{
   }
   }
 });
+
+
+app.patch("/todos/:id/is_completed", async(req,res)=>{
+  const { id } = req.params;
+  const now = new Date().toISOString();
+  if(id){
+    const todo = await prisma.todo.findUnique({where:{id}});
+    if(todo){
+      if(todo.completedAt === null){
+        const updatedTodo = await prisma.todo.update({
+          where:{id}, 
+          data:{completedAt: now}
+        });
+        res.json(updatedTodo);
+      }else{
+        res.status(400).json({message: "タスクは既に完了しています"});
+      }
+    }else{
+      res.status(404).json({message: "Todo not found"});
+    }
+  }
+});
+
 
 //タスクの削除
 app.delete("/todos/:id", async(req,res)=>{
