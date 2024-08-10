@@ -11,11 +11,11 @@ app.use(bodyParser.json());
 
 //タスクを取得 : LIKE検索, 期日の範囲検索
 const getTodoSchema = z.object({
-  title: z.string().optional(),
-  body: z.string().optional(),
+  search_title: z.string().optional(),
+  search_body: z.string().optional(),
   dueDateStart: z.string().optional(),
   dueDateEnd: z.string().optional(),
-  completedAt: z.string().optional()
+  is_dueNull: z.string().optional()
 });
 
 app.get("/todos", async(req,res) =>{
@@ -24,22 +24,21 @@ app.get("/todos", async(req,res) =>{
     if(!result.success){
       res.status(400).json({error: result.error.errors[0].message});
     }else{
-      const {title, body, dueDateStart, dueDateEnd} = result.data;
+      const {search_title, search_body, dueDateStart, dueDateEnd, is_dueNull} = result.data;
+      const dueStart = dueDateStart+"T00:00:00.000Z";
+      const dueEnd = dueDateEnd+"T23:59:59.999Z";
       const todos = await prisma.todo.findMany({
         where: {
-          ...(title && {title:{contains: title}}),
-          ...(body && {body:{contains: body}}),
-          ...(dueDateStart && dueDateEnd && {dueDate: {gte: dueDateStart,lte: dueDateEnd}}),
+          ...(search_title && {title:{contains: search_title}}),
+          ...(search_body && {body:{contains: search_body}}),
+          ...(dueStart && dueEnd && {dueDate: {gte: dueStart,lte: dueEnd}}),
+          ...(is_dueNull && {dueDate: null})
         },
         orderBy:{
           createdAt: "desc"
         }
       });
-      if(todos.length === 0){
-        res.status(404).json({message: "Todo not found"});
-      }else{
-        res.json(todos);
-      }
+      res.json(todos);
     }
   }catch(error){
     res.status(500).json({error: "Internal Server Error"});
@@ -124,7 +123,7 @@ app.patch("/todos/:id", async(req,res)=>{
   }
 });
 
-
+//タスクの完了
 app.patch("/todos/:id/is_completed", async(req,res)=>{
   const { id } = req.params;
   const now = new Date().toISOString();
